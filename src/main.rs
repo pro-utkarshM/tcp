@@ -8,8 +8,22 @@ fn main() -> io::Result<()> {
     loop {
         let nbytes = nic.recv(&mut buf[..])?;
         let read_bytes = &buf[..nbytes];
+        let flags = u16::from_be_bytes([read_bytes[0], read_bytes[1]]);
+        let proto = u16::from_be_bytes([read_bytes[2], read_bytes[3]]);
 
-        eprintln!("Read {} bytes: {:x?}", nbytes, read_bytes);
+        if proto!= 0x0800 {
+            eprintln!("Non IPv4 packet received, proto={:#06x}", proto);
+            continue;
+        }
+        match etherparse::Ipv4HeaderSlice::from_slice(&read_bytes[4..nbytes]) {
+            Ok(packet) => {
+                eprintln!("Flags: {:#06x}, Proto: {:#06x}", flags, proto);
+                eprintln!("Read {} bytes: {:?}", nbytes - 4, packet);
+            },
+            Err(e) => {
+                eprintln!("Failed to parse IPv4 header: {}", e);
+            }
+        }
     }
     Ok(())
 }
