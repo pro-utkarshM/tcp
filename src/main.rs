@@ -61,6 +61,10 @@ fn main() -> io::Result<()> {
                             dst_port: tcp_header.destination_port(),
                         };
 
+                        // for this project we are gonna make sure every port is open
+                        // and i am listening on all ports, no closed ports
+                        // so we dont need to check for SYN flag and open connection only on SYN packet
+
                         connections.entry(conn)
                             .or_default()
                             .on_packet(&ip_header, &tcp_header, payload);
